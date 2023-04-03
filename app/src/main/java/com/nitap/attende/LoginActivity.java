@@ -41,6 +41,7 @@ import com.google.firebase.storage.StorageReference;
 import com.nitap.attende.models.MyConfiguration;
 import com.nitap.attende.models.MyStudent;
 import com.nitap.attende.models.Section;
+import com.nitap.attende.models.SectionInfo;
 import com.nitap.attende.models.Student;
 import com.nitap.attende.models.Class;
 import com.nitap.attende.models.StudentConfiguration;
@@ -300,14 +301,15 @@ public class LoginActivity extends AppCompatActivity {
 
         MyConfiguration myConfiguration = MyUtils.getConfiguration(this);
 
-        if(myConfiguration==null){
+        if(myConfiguration==null ){
             //determine email and register
             String email = currentUser.getEmail();
             String[] contents = Objects.requireNonNull(email).split("@");
             if (contents.length == 2 && Objects.equals(contents[1], "student.nitandhra.ac.in")) {
                 checkIfStudentExists();
             } else {
-                //checkIfUserIsTeacher();
+                display("checking if a teacher");
+                checkIfUserIsTeacher();
             }
 
 
@@ -337,7 +339,8 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void checkIfUserIsTeacher(String email) {
+    private void checkIfUserIsTeacher() {
+        String email = mAuth.getCurrentUser().getEmail();
         String teacherId = email.replace(".","?");
         DatabaseReference courseRef = FirebaseDatabase.getInstance().getReference().child("teachers").child(teacherId);
         courseRef.addValueEventListener(new ValueEventListener() {
@@ -348,15 +351,14 @@ public class LoginActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     //TODO:  Now teacher exists, download teacher object and save jsonString
                     Teacher teacher = snapshot.getValue(Teacher.class);
-                    TeacherConfiguration tConfig = new TeacherConfiguration();
-                    tConfig.teacher= teacher;
-                    String tString = MyUtils.getStringFromObject(tConfig);
-                    MyUtils.removeAll(getApplicationContext());
-                    MyUtils.saveString(getApplicationContext(),"TEACHERCONFIG",tString);
-                    assert MyUtils.getTeacherConfiguration(getApplicationContext())!=null;
-                    hasLeft = true;
-                    startActivity(new Intent(getApplicationContext(),TeacherDashboardActivity.class));
-                    finish();
+                    MyConfiguration myConfiguration = new MyConfiguration();
+                    myConfiguration.teacher = new Teacher();
+                    myConfiguration.teacher = teacher;
+                    myConfiguration.teacher.sectionInfos=new ArrayList<SectionInfo>();
+                    MyUtils.saveConfigurationBuilder(getApplicationContext(),myConfiguration);
+                    display("fetching section infos");
+                    fetchSectionInfos(myConfiguration.teacher);
+
                 } else {
                    checkIfUserIsAdmin(email);
                 }
@@ -370,8 +372,94 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void fetchSectionInfos(Teacher teacher) {
+        MyConfiguration myConfiguration = MyUtils.getConfigurationBuilder(this);
+        ArrayList<String> sectionIds = myConfiguration.teacher.sectionIds;
+        ArrayList<SectionInfo> sectionInfos = new ArrayList<SectionInfo>();
+
+        for (int i=0;i<sectionIds.size();i++) {
+            String sectionId = sectionIds.get(i);
+            SectionInfo sectionInfo = new SectionInfo();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("sections").child(sectionId);
+            ref.get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
+                @Override
+                public void onSuccess(DataSnapshot dataSnapshot) {
+                    display("got section info");
+                    Section section = dataSnapshot.getValue(Section.class);
+                    sectionInfo.sectionId = section.sectionId;
+                    sectionInfo.sectionName = section.sectionName;
+                    sectionInfo.classId = section.classId;
+
+                    DatabaseReference ref1 = FirebaseDatabase.getInstance().getReference().child("classes").child(section.classId);
+                    ref1.get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
+                        @Override
+                        public void onSuccess(DataSnapshot dataSnapshot) {
+                            display("got class info");
+                            Class class1 = dataSnapshot.getValue(Class.class);
+                            sectionInfo.degree = class1.degree;
+                            sectionInfo.branch = class1.branch;
+                            sectionInfo.year = class1.year;
+                            sectionInfo.sem = class1.sem;
+
+                            // ADD SECTION INFO OBJECT TO LIST
+                            sectionInfos.add(sectionInfo);
+
+                            if(sectionInfos.size()!=sectionIds.size()) {
+                                //Completed all tasks
+                                myConfiguration.teacher.sectionInfos = sectionInfos;
+                                MyUtils.saveConfigurationBuilder(getApplicationContext(),myConfiguration);
+                                MyConfiguration myConfiguration1 = MyUtils.getConfigurationBuilder(getApplicationContext());
+                                MyUtils.saveConfiguration(getApplicationContext(),myConfiguration1);
+                                MyUtils.removeConfigurationBuilder(getApplicationContext());
+
+                                hasLeft=true;
+                                startActivity(new Intent(getApplicationContext(),TeacherDashboardActivity.class));
+                                finish();
+
+
+
+                            } else {
+                                display("waiting for loop end");
+                            }
+
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            display("failed to get class info");
+                        }
+                    });
+
+
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    display("Failed to get section info");
+                }
+            });
+
+
+
+        }
+        /*
+        while() {
+            display("waiting for loop end");
+            try {
+                //Thread.sleep(100);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }*/
+
+
+
+    }
+
     private void checkIfUserIsAdmin(String email) {
-        DatabaseReference courseRef = FirebaseDatabase.getInstance().getReference().child("OBJECTS").child("ADMINS").child(email);
+        DatabaseReference courseRef = FirebaseDatabase.getInstance().getReference().child("admins").child(email);
         courseRef.addValueEventListener(new ValueEventListener() {
             @SuppressLint("NewApi")
             @Override

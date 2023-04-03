@@ -5,20 +5,20 @@ plugins {
 }
 
 android {
-//    signingConfigs {
-//        debug {
-//            storeFile file('C:\\Users\\apraj\\Downloads\\key.jks')
-//            storePassword 'password'
-//            keyAlias 'key'
-//            keyPassword 'password'
-//        }
-//        release {
-//            storeFile file('C:\\Users\\apraj\\Downloads\\key.jks')
-//            storePassword 'password'
-//            keyAlias 'key'
-//            keyPassword 'password'
-//        }
-//    }
+    signingConfigs {
+        debug {
+            storeFile file('C:\\Users\\apraj\\Downloads\\key.jks')
+            storePassword 'password'
+            keyAlias 'key'
+            keyPassword 'password'
+        }
+        release {
+            storeFile file('C:\\Users\\apraj\\Downloads\\key.jks')
+            storePassword 'password'
+            keyAlias 'key'
+            keyPassword 'password'
+        }
+    }
     compileSdk 31
 
     buildFeatures {
@@ -86,5 +86,10 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-jackson:2.2.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.google.firebase:firebase-storage'
+
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+    implementation group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '3.1.0'
+    implementation 'javax.xml.stream:stax-api:1.0'
+    implementation 'com.fasterxml:aalto-xml:1.2.2'
 
 }
