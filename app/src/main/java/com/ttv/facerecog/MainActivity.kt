@@ -45,7 +45,7 @@ class  MainActivity : AppCompatActivity(){
         mydb!!.getAllUsers()
         com.nitap.attende.MainActivity.mydb = mydb;
 
-            val myintent = Intent(this, com.nitap.attende.AdminActivity::class.java)
+            val myintent = Intent(this, com.nitap.attende.LoginActivity::class.java)
             startActivity(myintent)
             finish();
 
