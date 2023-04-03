@@ -1,5 +1,7 @@
 package com.nitap.attende.pages;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -78,7 +81,16 @@ public class HomeActivity extends AppCompatActivity {
 
 
         binding.aboutUsBtn.setOnClickListener(v -> {
-            signOut();
+            //signOut();
+            Toast.makeText(getApplicationContext(), "Signed Out Successfully", Toast.LENGTH_SHORT).show();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+                    am.clearApplicationUserData();
+
+                }
+            },500);
         });
         assert MyUtils.getConfiguration(this).student!=null;
 

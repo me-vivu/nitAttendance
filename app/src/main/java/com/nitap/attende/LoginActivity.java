@@ -301,13 +301,14 @@ public class LoginActivity extends AppCompatActivity {
 
         MyConfiguration myConfiguration = MyUtils.getConfiguration(this);
 
-        if(myConfiguration==null){
+        if(myConfiguration==null ){
             //determine email and register
             String email = currentUser.getEmail();
             String[] contents = Objects.requireNonNull(email).split("@");
             if (contents.length == 2 && Objects.equals(contents[1], "student.nitandhra.ac.in")) {
                 checkIfStudentExists();
             } else {
+                display("checking if a teacher");
                 checkIfUserIsTeacher();
             }
 
@@ -355,7 +356,7 @@ public class LoginActivity extends AppCompatActivity {
                     myConfiguration.teacher = teacher;
                     myConfiguration.teacher.sectionInfos=new ArrayList<SectionInfo>();
                     MyUtils.saveConfigurationBuilder(getApplicationContext(),myConfiguration);
-
+                    display("fetching section infos");
                     fetchSectionInfos(myConfiguration.teacher);
 
                 } else {
@@ -403,6 +404,24 @@ public class LoginActivity extends AppCompatActivity {
                             // ADD SECTION INFO OBJECT TO LIST
                             sectionInfos.add(sectionInfo);
 
+                            if(sectionInfos.size()!=sectionIds.size()) {
+                                //Completed all tasks
+                                myConfiguration.teacher.sectionInfos = sectionInfos;
+                                MyUtils.saveConfigurationBuilder(getApplicationContext(),myConfiguration);
+                                MyConfiguration myConfiguration1 = MyUtils.getConfigurationBuilder(getApplicationContext());
+                                MyUtils.saveConfiguration(getApplicationContext(),myConfiguration1);
+                                MyUtils.removeConfigurationBuilder(getApplicationContext());
+
+                                hasLeft=true;
+                                startActivity(new Intent(getApplicationContext(),TeacherDashboardActivity.class));
+                                finish();
+
+
+
+                            } else {
+                                display("waiting for loop end");
+                            }
+
 
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -425,23 +444,17 @@ public class LoginActivity extends AppCompatActivity {
 
 
         }
-        while(sectionInfos.size()!=sectionIds.size()) {
+        /*
+        while() {
+            display("waiting for loop end");
             try {
-                Thread.sleep(100);
+                //Thread.sleep(100);
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }
+        }*/
 
-        myConfiguration.teacher.sectionInfos = sectionInfos;
-        MyUtils.saveConfigurationBuilder(getApplicationContext(),myConfiguration);
-        MyConfiguration myConfiguration1 = MyUtils.getConfigurationBuilder(getApplicationContext());
-        MyUtils.saveConfiguration(getApplicationContext(),myConfiguration1);
-        MyUtils.removeConfigurationBuilder(this);
 
-        hasLeft=true;
-        startActivity(new Intent(this,TeacherDashboardActivity.class));
-        finish();
 
     }
 
