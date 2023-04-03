@@ -82,6 +82,13 @@ public class HomeActivity extends AppCompatActivity {
         });
         assert MyUtils.getConfiguration(this).student!=null;
 
+        binding.reportBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(HomeActivity.this, TakeAttendance.class));
+            }
+        });
+
         binding.attendanceBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

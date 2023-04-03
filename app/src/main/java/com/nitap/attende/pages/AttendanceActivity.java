@@ -2,22 +2,30 @@ package com.nitap.attende.pages;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.nitap.attende.EncryptActivity;
+import com.nitap.attende.MyUtils;
+import com.nitap.attende.models.MyConfiguration;
 import com.ttv.facerecog.databinding.ActivityAttendanceBinding;
 
 public class AttendanceActivity extends AppCompatActivity {
 
     ActivityAttendanceBinding binding;
-    final String bt_name = "CkyM8zssrZQTUzW6cFjFzzroaw8y/ZeB4hxEtssR33k=";
+    String bt_name ;
+    BluetoothAdapter bluetoothAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,74 +33,90 @@ public class AttendanceActivity extends AppCompatActivity {
         binding = ActivityAttendanceBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        MyConfiguration myConfiguration = MyUtils.getConfiguration(getApplicationContext());
+
+        if(myConfiguration!= null){
+            bt_name = myConfiguration.student.rollno;
+            bt_name = EncryptActivity.encrypt(bt_name);
+
+        }else{
+            Toast.makeText(this, "can't access local storage", Toast.LENGTH_SHORT).show();
+        }
+
+
+
         binding.attendanceBtn.setOnClickListener(v -> {
-            Boolean flag = setBluetooth(true);
+
+            if (ContextCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    ActivityCompat.requestPermissions(AttendanceActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+                }
+
+            }
+            if (ContextCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_DENIED) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    ActivityCompat.requestPermissions(AttendanceActivity.this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 2);
+                }
+
+            }
+
+            if (ContextCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                if (!bluetoothAdapter.isEnabled()) {
+                    bluetoothAdapter.enable();
+                } else if (!bluetoothAdapter.isDiscovering()) {
+                    Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                    discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 100);
+
+
+                    bluetoothLauncher.launch(discoverableIntent);
+                }
+
+            }
+
 
         });
 
     }
 
     public boolean setBluetooth(boolean enable) {
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         final long lTimeToGiveUp_ms = System.currentTimeMillis() + 10000;
 
-
-        if (ContextCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ActivityCompat.requestPermissions(AttendanceActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
-            }
-
-        }
+        Toast.makeText(this, "Entered SetBluetooth", Toast.LENGTH_SHORT).show();
 
         if (ContextCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            if (!bluetoothAdapter.isEnabled()) {
-                bluetoothAdapter.enable();
-            }
-
 
             if (bluetoothAdapter.isEnabled()) {
+
                 String sOldName = bluetoothAdapter.getName();
 
-                if (sOldName.equalsIgnoreCase(bt_name) == false) {
-                    final Handler myTimerHandler = new Handler();
-                    myTimerHandler.postDelayed(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (bluetoothAdapter.isEnabled()) {
-
-                                        if (ActivityCompat.checkSelfPermission(AttendanceActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                                            Toast.makeText(AttendanceActivity.this, "bluetooth is enabled and setting name", Toast.LENGTH_SHORT).show();
-                                            return;
-                                        }
-                                        bluetoothAdapter.setName(bt_name);
-                                        if (bt_name.equalsIgnoreCase(bluetoothAdapter.getName()))
-                                            Toast.makeText(AttendanceActivity.this, bluetoothAdapter.getName() +"changed", Toast.LENGTH_SHORT).show();
-
-                                    }
-                                    if ((bt_name.equalsIgnoreCase(bluetoothAdapter.getName()) == false) && (System.currentTimeMillis() < lTimeToGiveUp_ms))
-                                    {
-                                        myTimerHandler.postDelayed(this, 500);
-                                        if (bluetoothAdapter.isEnabled())
-                                            Toast.makeText(AttendanceActivity.this, "Update BT Name: waiting on BT Enable", Toast.LENGTH_SHORT).show();
-
-                                        else
-                                            Toast.makeText(AttendanceActivity.this, "Waiting", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            } , 500);
-                }
+                Boolean flag = bluetoothAdapter.setName(bt_name);
 
 
             }
 
 
         }
-
-
-
-
 
         return true;
     }
+
+    ActivityResultLauncher<Intent> bluetoothLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+
+                if (result.getResultCode() == 100) {
+                    setBluetooth(true);
+                } else {
+                    Toast.makeText(this, "Not discoverable", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+    );
+
+
+
+
+
 }

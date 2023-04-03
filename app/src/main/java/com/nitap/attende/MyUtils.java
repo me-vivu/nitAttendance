@@ -118,7 +118,7 @@ public class MyUtils {
 
     public static void saveString(Context context,String key,String value) {
         SharedPreferences prefs = context.getSharedPreferences("application",Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
+        SharedPreferences.Editor  editor = prefs.edit();
         editor.putString(key, value);
         editor.commit();
     }

@@ -218,14 +218,20 @@ public class TakeAttendance extends AppCompatActivity {
         } catch (Throwable e) {
             e.printStackTrace();
             display(e.toString());
-            if (statusTextView != null) {    statusTextView.setText(e.toString());  }
+            if (statusTextView != null) {    statusTextView.setText("Press take attendance Again");  }
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(bluetoothDiscoveryReceiver);
+        try{
+            unregisterReceiver(bluetoothDiscoveryReceiver);
+        }catch (Exception e){
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+
+        }
+
     }
 
     @Override
