@@ -23,8 +23,10 @@ public class TeacherDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        assert MyUtils.getConfiguration(this).teacher!=null;
         setContentView(R.layout.activity_home);
         // tConfig = MyUtils.getTeacherConfiguration(this);
+        /*
         tConfig = new TeacherConfiguration();
         tConfig.teacher = new Teacher();
         tConfig.teacher.courses = new ArrayList<>();
@@ -70,6 +72,6 @@ public class TeacherDashboardActivity extends AppCompatActivity {
         fname.setText(contents[0]);
         lname.setText(contents[1]);
 
-
+*/
     }
 }
