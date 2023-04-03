@@ -443,7 +443,6 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(new Intent(this,TeacherDashboardActivity.class));
         finish();
 
-
     }
 
     private void checkIfUserIsAdmin(String email) {
