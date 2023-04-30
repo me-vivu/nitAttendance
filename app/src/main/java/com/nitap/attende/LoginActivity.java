@@ -2,6 +2,7 @@ package com.nitap.attende;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -88,10 +90,20 @@ public class LoginActivity extends AppCompatActivity {
     public static boolean shouldTrain = false;
     public static boolean isEnabled = false;
 
+    ProgressDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+         FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("attendance_record");
+
+         progressDialog = new ProgressDialog(LoginActivity.this);
+
+
+
         hasLeft = false;
         MyUtils.removeConfigurationBuilder(this);
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -113,7 +125,6 @@ public class LoginActivity extends AppCompatActivity {
         signInButton.setOnClickListener(v -> {
             if(isEnabled) {
                 isEnabled = false;
-                display("Verifying your details, please wait");
                 signIn();
             } else {
                 display("Processing, try again later");
@@ -134,6 +145,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signIn() {
+
+
+
         signOut(getApplicationContext());
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -147,6 +161,9 @@ public class LoginActivity extends AppCompatActivity {
 
         if (requestCode == RC_SIGN_IN && mAuth.getCurrentUser()==null)  {
             Toast.makeText(getApplicationContext(), "Got Google account", Toast.LENGTH_SHORT).show();
+            progressDialog.setMessage("Please wait...");
+            progressDialog.show();
+
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
 
@@ -173,6 +190,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+
 
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -303,11 +321,12 @@ public class LoginActivity extends AppCompatActivity {
 
         if(myConfiguration==null ){
             //determine email and register
+            Intent intent = getIntent();
             String email = currentUser.getEmail();
             String[] contents = Objects.requireNonNull(email).split("@");
             if (contents.length == 2 && Objects.equals(contents[1], "student.nitandhra.ac.in")) {
                 checkIfStudentExists();
-            } else {
+            } else if((intent.getStringExtra("role")).equals("teacher")){
                 display("checking if a teacher");
                 checkIfUserIsTeacher();
             }
@@ -317,24 +336,23 @@ public class LoginActivity extends AppCompatActivity {
 
         }else if(myConfiguration.student!=null && myConfiguration.teacher==null  && myConfiguration.admin==null){
             hasLeft = true;
+            progressDialog.dismiss();
             startActivity(new Intent(this,HomeActivity.class));
             finish();
 
         }else if(myConfiguration.student==null && myConfiguration.teacher!=null  && myConfiguration.admin==null) {
             hasLeft = true;
+            progressDialog.dismiss();
             startActivity(new Intent(this,TeacherDashboardActivity.class));
             finish();
 
         }else if(myConfiguration.student==null && myConfiguration.teacher==null  && myConfiguration.admin!=null){
             hasLeft = true;
+            progressDialog.dismiss();
             startActivity(new Intent(this,AdminActivity.class));
             finish();
 
         }
-
-
-
-
 
 
     }
@@ -413,6 +431,7 @@ public class LoginActivity extends AppCompatActivity {
                                 MyUtils.removeConfigurationBuilder(getApplicationContext());
 
                                 hasLeft=true;
+                                progressDialog.dismiss();
                                 startActivity(new Intent(getApplicationContext(),TeacherDashboardActivity.class));
                                 finish();
 
@@ -472,6 +491,7 @@ public class LoginActivity extends AppCompatActivity {
                     MyUtils.removeString(getApplicationContext(),"STUDENT");
                     MyUtils.removeString(getApplicationContext(),"TEACHER");
                     hasLeft = true;
+                    progressDialog.dismiss();
                     startActivity(new Intent(getApplicationContext(),AdminActivity.class));
                     finish();
                 } else {
@@ -639,6 +659,7 @@ public class LoginActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Upload photo to complete the registration", Toast.LENGTH_SHORT).show();
         hasLeft = true;
         rollno = mAuth.getCurrentUser().getEmail().split("@")[0];
+        progressDialog.dismiss();
         startActivity(new Intent(this,FaceRecognitionActivity.class));
         finish();
     }
@@ -840,6 +861,7 @@ public class LoginActivity extends AppCompatActivity {
                 display("Please ReUpload the same image "+rollno+".jpg to continue");
 
                 hasLeft=true;
+                progressDialog.dismiss();
                 startActivity(new Intent(getApplicationContext(),ReUploadActivity.class));
                 finish();
             }
@@ -1091,6 +1113,7 @@ public class LoginActivity extends AppCompatActivity {
                         MyUtils.removeString(getApplicationContext(),"TEACHER");
                         MyUtils.removeString(getApplicationContext(),"ADMIN");
                         hasLeft=true;
+                        progressDialog.dismiss();
                         startActivity(new Intent(getApplicationContext(),FaceRecognitionActivity.class));
                         finish();
                     }

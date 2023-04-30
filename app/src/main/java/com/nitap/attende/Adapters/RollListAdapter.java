@@ -71,5 +71,20 @@ public class RollListAdapter extends RecyclerView.Adapter<RollListAdapter.ViewHo
             giveAttendanceSwitch = itemView.findViewById(R.id.present_switch);
         }
     }
+
+
+    public void removeItem(int position) {
+        rollList.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public void restoreItem(RollListModel item, int position) {
+        rollList.add(position, item);
+        notifyItemInserted(position);
+    }
+
+    public ArrayList<RollListModel> getData() {
+        return rollList;
+    }
 }
 

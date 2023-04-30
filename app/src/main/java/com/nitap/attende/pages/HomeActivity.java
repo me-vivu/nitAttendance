@@ -155,6 +155,14 @@ public class HomeActivity extends AppCompatActivity {
 
     }
 
+    public void GetUserData(){
+
+        MyConfiguration myConfiguration = MyUtils.getConfigurationBuilder(this);
+
+        binding.fname.setText(myConfiguration.student.name);
+
+    }
+
 
 
 

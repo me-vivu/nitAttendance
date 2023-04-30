@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@color/white"
+    tools:context="com.nitap.attende.pages.RolePage"
+    >
+
+    <Button
+        android:id="@+id/student_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="I am a student"
+        android:layout_marginBottom="30dp"
+        android:padding="10dp"
+        android:backgroundTint="@color/cardBg"/>
+
+    <Button
+        android:id="@+id/teacher_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:backgroundTint="@color/cardBg"
+        android:text="I am a teacher" />
+
+
+</LinearLayout>

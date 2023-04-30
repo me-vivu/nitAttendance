@@ -1,17 +1,23 @@
 package com.nitap.attende.pages;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -20,6 +26,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.nitap.attende.Adapters.RollListAdapter;
 import com.nitap.attende.ClickListener;
 import com.nitap.attende.model.RollListModel;
+import com.ttv.facerecog.MainActivity;
 import com.ttv.facerecog.R;
 import com.ttv.facerecog.databinding.ActivityDisplayAttendanceBinding;
 
@@ -28,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NavigableMap;
 
 public class DisplayAttendance extends AppCompatActivity implements ClickListener {
 
@@ -38,6 +46,7 @@ public class DisplayAttendance extends AppCompatActivity implements ClickListene
     String sectionId, subject;
     String sectionCode;
     RecyclerView rollView;
+    RollListAdapter adapter;
 
 
     ActivityDisplayAttendanceBinding binding;
@@ -64,9 +73,41 @@ public class DisplayAttendance extends AppCompatActivity implements ClickListene
         binding.submitAttendance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadData();
+                AlertDialog.Builder dialog  = new AlertDialog.Builder(DisplayAttendance.this);
+                dialog.setMessage("Are you sure?");
+                dialog.setCancelable(true);
+
+                dialog.setPositiveButton(
+                        "Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                                uploadData();
+
+                                startActivity(new Intent(DisplayAttendance.this, HomeActivity.class));
+
+
+
+
+                            }
+                        });
+
+                dialog.setNegativeButton(
+                        "No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+                AlertDialog alert = dialog.create();
+                alert.show();
+
+
             }
         });
+
+        enableSwipeToDeleteAndUndo();
 
 
 
@@ -115,7 +156,7 @@ public class DisplayAttendance extends AppCompatActivity implements ClickListene
                         LinearLayoutManager layoutManager = new LinearLayoutManager(DisplayAttendance.this);
                         rollView.setLayoutManager(layoutManager);
 
-                        RollListAdapter adapter = new RollListAdapter(absenteesList, DisplayAttendance.this, DisplayAttendance.this);
+                        adapter = new RollListAdapter(absenteesList, DisplayAttendance.this, DisplayAttendance.this);
                         rollView.setAdapter(adapter);
                         adapter.notifyDataSetChanged();
 
@@ -160,6 +201,10 @@ public class DisplayAttendance extends AppCompatActivity implements ClickListene
 
     public void uploadData(){
 
+
+
+
+
         final DatabaseReference attendance_ref = FirebaseDatabase.getInstance().getReference().child("attendance_record");
 
         final String saveCurrentDate, saveCurrentMonth, saveCurrentTime;
@@ -197,5 +242,40 @@ public class DisplayAttendance extends AppCompatActivity implements ClickListene
                             });
 
 
+    }
+
+    private void enableSwipeToDeleteAndUndo() {
+
+        //Toast.makeText(this, "Entered swipe to delete and Undo", Toast.LENGTH_SHORT).show();
+        SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(this) {
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+
+
+                final int position = viewHolder.getAdapterPosition();
+                final RollListModel item = adapter.getData().get(position);
+
+                adapter.removeItem(position);
+
+
+                Snackbar snackbar = Snackbar
+                        .make(binding.coordinatorLayout, item.getRoll_num()+" was removed from the list.", Snackbar.LENGTH_LONG);
+                snackbar.setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        adapter.restoreItem(item, position);
+                        rollView.scrollToPosition(position);
+                    }
+                });
+
+                snackbar.setActionTextColor(Color.YELLOW);
+                snackbar.show();
+
+            }
+        };
+
+        ItemTouchHelper itemTouchhelper = new ItemTouchHelper(swipeToDeleteCallback);
+        itemTouchhelper.attachToRecyclerView(rollView);
     }
 }

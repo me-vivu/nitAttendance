@@ -71,7 +71,8 @@ public class FaceRecognitionActivity extends AppCompatActivity {
         userLists = new ArrayList(0);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_recognition);
-        Toast.makeText(getApplicationContext(), "FACE RECOGNITION ACTIVITY", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), "FACE RECOGNITION ACTIVITY", Toast.LENGTH_SHORT).show();
+
         this.mydb = new DBHelper(this);
         this.mydb = new DBHelper((Context)this);
 
